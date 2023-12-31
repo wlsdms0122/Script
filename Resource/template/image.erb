@@ -1,0 +1,18 @@
+//
+//  Resource+Image.swift
+//  
+//
+//  Created by Resource Script
+//
+
+import UIKit
+
+public extension Resource {
+    enum Image { }
+}
+
+public extension Resource.Image {
+    <%- resources.each do |resource| -%>
+    static var <%= resource.key %>: UIImage { UIImage(named: "<%= resource.value %>", in: .module, compatibleWith: nil)! }
+    <%- end -%>
+}
