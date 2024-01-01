@@ -18,11 +18,81 @@ ROOT_PATH = Dir.pwd
 
 Resource = Struct.new(:key, :value)
 
-# Method
-def parseResources(path, type)
-    case type.to_sym
-    when :strings
-        resources = File.readlines(path)
+# Class
+class Generator
+    # Property
+
+    # Initializer
+    def initialize(
+        rootPath,
+        outputPath,
+        output,
+        templatePath,
+        sourcePath
+    )
+        @rootPath = Pathname.new(rootPath)
+        @outputPath = outputPath
+        @output = output
+        @templatePath = templatePath
+        @sourcePath = sourcePath
+    end
+
+    # Public
+    def parse(path)
+        raise NotImplementedError.new
+    end
+    
+    def generate
+        if @templatePath.nil?
+            raise StandardError.new("Template file path not specified.")
+        end
+
+        if @outputPath.nil? || @output.nil?
+            raise StandardError.new("Output file path not specified.")
+        end
+
+        resources = parse(@sourcePath)
+
+        templateERB = ERB.new(
+            File.read(@rootPath + @templatePath),
+            trim_mode: "-"
+        )
+        File.write(
+            @rootPath + @outputPath + @output,
+            templateERB.result(binding)
+        )
+    end
+
+    # Private
+    private
+end
+
+class NoneGenerator < Generator
+    # Property
+
+    # Initializer
+
+    # Public
+    def parse(path)
+        []
+    end
+
+    private
+    # Private
+end
+
+class StringsGenerator < Generator
+    # Property
+
+    # Initializer
+
+    # Public
+    def parse(path)
+        if path.nil?
+            return []
+        end
+
+        File.readlines(@rootPath + path)
             .filter { |line| line =~ /".*" ?= ?".*";/ }
             .map { |line| 
                 key = line.split(/ ?= ?/).first
@@ -30,26 +100,46 @@ def parseResources(path, type)
                 
                 Resource.new(key.camelCase, key)
             }
-        resources
+    end
 
-    when :assets
-        Dir["#{path}/**/*.imageset"].map { |path|
+    private
+    # Private
+end
+
+class AssetsGenerator < Generator
+    # Property
+
+    # Initializer
+    
+    # Public
+    def parse(path)
+        if path.nil?
+            return []
+        end
+
+        Dir["#{@rootPath + path}/**/*.imageset"].map { |path|
             key = File.basename(path).split(".").first
             
             Resource.new(key.camelCase, key)
         }
     end
+
+    private
+    # Private
 end
 
-def generate(outputPath, templatePath, resources)
-    templateERB = ERB.new(
-        File.read(templatePath), 
-        trim_mode: "-"
-    )
-    File.write(
-        outputPath,
-        templateERB.result(binding)
-    )
+# Method
+def makeGenerator(type, rootPath, outputPath, output, templatePath, sourcePath)
+    case type.to_sym
+    when :none
+        NoneGenerator.new(rootPath, outputPath, output, templatePath, sourcePath)
+
+    when :strings
+        StringsGenerator.new(rootPath, outputPath, output, templatePath, sourcePath)
+
+    when :assets
+        AssetsGenerator.new(rootPath, outputPath, output, templatePath, sourcePath)
+    end
 end
 
 # Main
@@ -67,23 +157,33 @@ def main(argv)
         config = Config.new(arguments["config"]&.first || CONFIG_PATH, scheme: {
             :outputPath => "./",
             :resources => {
-                :localizable => {
+                :root => {
+                    :type => :none,
+                    :source => nil,
+                    :output => "Resource.swift",
+                    :template => "#{__dir__}/../template/resource.erb",
+                    :skip => false
+                },
+                :string => {
                     :type => :strings,
                     :source => nil,
                     :output => "Resource+Localizable.swift",
-                    :template => "#{__dir__}/../template/localizable.erb"
+                    :template => "#{__dir__}/../template/localizable.erb",
+                    :skip => false
                 },
                 :image => {
                     :type => :assets,
                     :source => nil,
                     :output => "Resource+Image.swift",
-                    :template => "#{__dir__}/../template/image.erb"
+                    :template => "#{__dir__}/../template/image.erb",
+                    :skip => false
                 },
                 :icon => {
                     :type => :assets,
                     :source => nil,
                     :output => "Resource+Icon.swift",
-                    :template => "#{__dir__}/../template/icon.erb"
+                    :template => "#{__dir__}/../template/icon.erb",
+                    :skip => false
                 }
             }
         })
@@ -91,24 +191,27 @@ def main(argv)
         
         # Start generate
         config[:resources].values
-            .each { |resource|
-                next if resource[:source].nil?
-                
-                resources = parseResources(
-                    rootPath + Pathname.new(resource[:source]), 
-                    resource[:type]
-                )
-                next if resources.empty?
-
-                generate(
-                    rootPath + Pathname.new(config[:outputPath]) + Pathname.new(resource[:output]),
+            .filter { |resource| !(resource[:skip] || false) }
+            .map { |resource|
+                makeGenerator(
+                    resource[:type], 
+                    rootPath,
+                    config[:outputPath],
+                    resource[:output],
                     resource[:template],
-                    resources
+                    resource[:source]
                 )
             }
+            .each { |generator| generator.generate() }
 
         puts "✅ Complete generate resources."
     rescue
-        abort("#{$!}\nuseage: ruby run.rb [-config config_file_path]")
+        abort(<<~ERROR
+            Error: #{$!}
+            #{$@.join("\n    ")}
+            
+            useage: ruby run.rb [-config config_file_path] [-root root_path]
+            ERROR
+        )
     end
 end
