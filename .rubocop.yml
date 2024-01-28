@@ -1,0 +1,21 @@
+Layout/ArrayAlignment:
+    EnforcedStyle: with_fixed_indentation
+Layout/BlockAlignment:
+    EnforcedStyleAlignWith: start_of_block
+Layout/MultilineMethodCallIndentation:
+    EnforcedStyle: indented
+
+Lint/UnusedMethodArgument:
+    AllowUnusedKeywordArguments: true
+Lint/UnusedBlockArgument:
+    AllowUnusedKeywordArguments: true
+
+Style/IndentationWidth:
+    Width: 4
+Style/BlockDelimiters:
+    EnforcedStyle: always_braces
+Style/StringLiterals:
+    EnforcedStyle: double_quotes
+
+Naming/MethodName:
+    EnforcedStyle: camelCase
