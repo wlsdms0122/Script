@@ -1,16 +1,17 @@
 #
 #  main.rb
-#  
+#
 #
 #  Created by JSilver on 2023/12/31.
 #
 
-require 'pathname'
-require 'yaml'
-require 'erb'
-require_relative 'lib/util'
-require_relative 'lib/argument'
-require_relative 'lib/config'
+require "pathname"
+require "yaml"
+require "json"
+require "erb"
+require_relative "lib/util"
+require_relative "lib/argument"
+require_relative "lib/config"
 
 # Contant
 CONFIG_PATH = ".resource.yaml"
@@ -38,18 +39,14 @@ class Generator
     end
 
     # Public
-    def parse(path)
-        raise NotImplementedError.new
+    def parse(_path)
+        raise NotImplementedError
     end
-    
-    def generate
-        if @templatePath.nil?
-            raise StandardError.new("Template file path not specified.")
-        end
 
-        if @outputPath.nil? || @output.nil?
-            raise StandardError.new("Output file path not specified.")
-        end
+    def generate
+        raise StandardError, "Template file path not specified." if @templatePath.nil?
+
+        raise StandardError, "Output file path not specified." if @outputPath.nil? || @output.nil?
 
         resources = parse(@sourcePath)
 
@@ -64,7 +61,6 @@ class Generator
     end
 
     # Private
-    private
 end
 
 class NoneGenerator < Generator
@@ -73,11 +69,10 @@ class NoneGenerator < Generator
     # Initializer
 
     # Public
-    def parse(path)
+    def parse(_path)
         []
     end
 
-    private
     # Private
 end
 
@@ -88,21 +83,35 @@ class StringsGenerator < Generator
 
     # Public
     def parse(path)
-        if path.nil?
-            return []
-        end
+        return [] if path.nil?
 
         File.readlines(@rootPath + path)
             .filter { |line| line =~ /".*" ?= ?".*";/ }
-            .map { |line| 
+            .map { |line|
                 key = line.split(/ ?= ?/).first
                     .gsub(/"/, "")
-                
+
                 Resource.new(key.camelCase, key)
             }
     end
 
-    private
+    # Private
+end
+
+class StringCatalogGenerator < Generator
+    # Property
+
+    # Initializer
+
+    # Public
+    def parse(path)
+        return [] if path.nil?
+
+        JSON.load_file(path)["strings"]
+            .keys
+            .map { |key| Resource.new(key.camelCase, key) }
+    end
+
     # Private
 end
 
@@ -110,21 +119,18 @@ class AssetsGenerator < Generator
     # Property
 
     # Initializer
-    
+
     # Public
     def parse(path)
-        if path.nil?
-            return []
-        end
+        return [] if path.nil?
 
         Dir["#{@rootPath + path}/**/*.imageset"].map { |path|
             key = File.basename(path).split(".").first
-            
+
             Resource.new(key.camelCase, key)
         }
     end
 
-    private
     # Private
 end
 
@@ -137,6 +143,9 @@ def makeGenerator(type, rootPath, outputPath, output, templatePath, sourcePath)
     when :strings
         StringsGenerator.new(rootPath, outputPath, output, templatePath, sourcePath)
 
+    when :stringCatalog
+        StringCatalogGenerator.new(rootPath, outputPath, output, templatePath, sourcePath)
+
     when :assets
         AssetsGenerator.new(rootPath, outputPath, output, templatePath, sourcePath)
     end
@@ -144,57 +153,58 @@ end
 
 # Main
 def main(argv)
-    begin
-        # Get arguments
-        parser = ArgumentParser.new([
-            Argument.new(command: "config", aliases: ["c"], min: 0, max: 1),
-            Argument.new(command: "root", aliases: ["r"], min: 0, max: 1)
-        ])
+    # Get arguments
+    parser = ArgumentParser.new([
+        Argument.new(command: "config", aliases: ["c"], min: 0, max: 1),
+        Argument.new(command: "root", aliases: ["r"], min: 0, max: 1)
+    ])
+    arguments = parser.parse(argv)
 
-        arguments = parser.parse(argv)
-
-        # Arguments
-        config = Config.new(arguments["config"]&.first || CONFIG_PATH, scheme: {
-            :outputPath => "./",
-            :resources => {
-                :root => {
-                    :type => :none,
-                    :source => nil,
-                    :output => "Resource.swift",
-                    :template => "#{__dir__}/../template/resource.erb",
-                    :skip => false
+    # Arguments
+    config = Config.new(
+        arguments["config"]&.first || CONFIG_PATH, scheme: {
+            outputPath: "./",
+            resources: {
+                root: {
+                    type: :none,
+                    source: nil,
+                    output: "Resource.swift",
+                    template: "#{__dir__}/../template/resource.erb",
+                    skip: false
                 },
-                :string => {
-                    :type => :strings,
-                    :source => nil,
-                    :output => "Resource+Localizable.swift",
-                    :template => "#{__dir__}/../template/localizable.erb",
-                    :skip => false
+                string: {
+                    type: :strings,
+                    source: nil,
+                    output: "Resource+Localizable.swift",
+                    template: "#{__dir__}/../template/localizable.erb",
+                    skip: false
                 },
-                :image => {
-                    :type => :assets,
-                    :source => nil,
-                    :output => "Resource+Image.swift",
-                    :template => "#{__dir__}/../template/image.erb",
-                    :skip => false
+                image: {
+                    type: :assets,
+                    source: nil,
+                    output: "Resource+Image.swift",
+                    template: "#{__dir__}/../template/image.erb",
+                    skip: false
                 },
-                :icon => {
-                    :type => :assets,
-                    :source => nil,
-                    :output => "Resource+Icon.swift",
-                    :template => "#{__dir__}/../template/icon.erb",
-                    :skip => false
+                icon: {
+                    type: :assets,
+                    source: nil,
+                    output: "Resource+Icon.swift",
+                    template: "#{__dir__}/../template/icon.erb",
+                    skip: false
                 }
             }
-        })
-        rootPath = Pathname.new(arguments["root"]&.first || ROOT_PATH)
-        
+        }
+    )
+    rootPath = Pathname.new(arguments["root"]&.first || ROOT_PATH)
+
+    begin
         # Start generate
         config[:resources].values
             .filter { |resource| !(resource[:skip] || false) }
             .map { |resource|
                 makeGenerator(
-                    resource[:type], 
+                    resource[:type],
                     rootPath,
                     config[:outputPath],
                     resource[:output],
@@ -202,16 +212,16 @@ def main(argv)
                     resource[:source]
                 )
             }
-            .each { |generator| generator.generate() }
+            .each { |generator| generator.generate }
 
         puts "✅ Complete generate resources."
-    rescue
+    rescue StandardError
         abort(<<~ERROR
             Error: #{$!}
             #{$@.join("\n    ")}
-            
-            useage: ruby run.rb [-config config_file_path] [-root root_path]
-            ERROR
-        )
+
+            usage: ruby run.rb [-config config_file_path] [-root root_path]
+        ERROR
+             )
     end
 end
