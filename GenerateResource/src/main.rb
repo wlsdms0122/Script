@@ -14,12 +14,31 @@ require_relative "lib/argument"
 require_relative "lib/config"
 
 # Contant
-CONFIG_PATH = ".resource.yaml"
+CONFIG_PATH = ".resource.yaml".freeze
 ROOT_PATH = Dir.pwd
 
-Resource = Struct.new(:key, :value)
-
 # Class
+class Resource
+    include Comparable
+
+    # Property
+    attr_reader :key
+    attr_reader :value
+
+    # Initializer
+    def initialize(key, value)
+        @key = key
+        @value = value
+    end
+
+    # Public
+    def <=>(other)
+        @key <=> other.key
+    end
+
+    # Private
+end
+
 class Generator
     # Property
 
@@ -49,6 +68,7 @@ class Generator
         raise StandardError, "Output file path not specified." if @outputPath.nil? || @output.nil?
 
         resources = parse(@sourcePath)
+            .sort
 
         templateERB = ERB.new(
             File.read(@rootPath + @templatePath),
@@ -212,16 +232,17 @@ def main(argv)
                     resource[:source]
                 )
             }
-            .each { |generator| generator.generate }
+            .each { |generator| generator&.generate }
 
         puts "✅ Complete generate resources."
     rescue StandardError
-        abort(<<~ERROR
-            Error: #{$!}
-            #{$@.join("\n    ")}
+        abort(
+            <<~ERROR
+                Error: #{$!}
+                #{$@.join("\n    ")}
 
-            usage: ruby run.rb [-config config_file_path] [-root root_path]
-        ERROR
-             )
+                usage: ruby run.rb [-config config_file_path] [-root root_path]
+            ERROR
+        )
     end
 end
