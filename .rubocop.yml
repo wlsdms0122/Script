@@ -9,6 +9,21 @@ Lint/UnusedMethodArgument:
     AllowUnusedKeywordArguments: true
 Lint/UnusedBlockArgument:
     AllowUnusedKeywordArguments: true
+Lint/ShadowingOuterLocalVariable:
+    Enabled: false
+Lint/LiteralAsCondition:
+    Enabled: false
+
+Metrics/AbcSize:
+    Enabled: false
+Metrics/MethodLength:
+    Enabled: false
+Metrics/ParameterLists:
+    Enabled: false
+Metrics/CyclomaticComplexity:
+    Enabled: false
+Metrics/PerceivedComplexity:
+    Enabled: false
 
 Style/IndentationWidth:
     Width: 4
@@ -16,6 +31,16 @@ Style/BlockDelimiters:
     EnforcedStyle: always_braces
 Style/StringLiterals:
     EnforcedStyle: double_quotes
+Style/QuotedSymbols:
+    EnforcedStyle: double_quotes
+Style/FrozenStringLiteralComment:
+    EnforcedStyle: never
+Style/Documentation:
+    Enabled: false
 
 Naming/MethodName:
     EnforcedStyle: camelCase
+Naming/VariableName:
+    EnforcedStyle: camelCase
+Naming/MethodParameterName:
+    Enabled: false
