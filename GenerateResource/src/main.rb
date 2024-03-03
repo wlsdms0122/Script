@@ -144,14 +144,38 @@ class AssetsGenerator < Generator
     def parse(path)
         return [] if path.nil?
 
-        Dir["#{@rootPath + path}/**/*.imageset"].map { |path|
-            key = File.basename(path).split(".").first
+        assetPath = @rootPath + path
+        Dir["#{assetPath}/**/*.imageset"]
+            .map { |path|
+                paths = namespaces(path, basePath: assetPath)
+                    .append(File.basename(path).split(".").first)
 
-            Resource.new(key.camelCase, key)
-        }
+                Resource.new(
+                    paths.join("_").camelCase,
+                    paths.join("/")
+                )
+            }
     end
 
     # Private
+    def namespaces(path, basePath:)
+        path = Pathname.new(path).parent
+        basePath = Pathname.new(basePath)
+
+        namespaces = []
+        while path != basePath
+            namespaces.append(path.basename) if isNamespace(path + "Contents.json")
+
+            path = path.parent
+        end
+
+        namespaces.reverse
+    end
+
+    def isNamespace(path)
+        JSON.load_file(path)
+            .dig("properties", "provides-namespace") || false
+    end
 end
 
 # Method
