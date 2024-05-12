@@ -1,0 +1,18 @@
+//
+//  Resource+Localizable.swift
+//
+//
+//  Created by Resource Script
+//
+
+import Foundation
+
+public extension Resource {
+    enum string { }
+}
+
+public extension Resource.string {
+    <%- resources.each do |resource| -%>
+    static var <%= resource.key %>: Resource.StringResource { Resource.StringResource("<%= resource.value %>", in: .module, default: "unknown") }
+    <%- end -%>
+}

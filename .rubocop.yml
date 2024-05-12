@@ -1,3 +1,7 @@
+AllCops:
+    Exclude:
+        - "**/*.erb"
+
 Layout/ArrayAlignment:
     EnforcedStyle: with_fixed_indentation
 Layout/BlockAlignment:
@@ -31,6 +35,8 @@ Style/BlockDelimiters:
     EnforcedStyle: always_braces
 Style/StringLiterals:
     EnforcedStyle: double_quotes
+Style/StringConcatenation:
+    Enabled: false
 Style/QuotedSymbols:
     EnforcedStyle: double_quotes
 Style/FrozenStringLiteralComment:

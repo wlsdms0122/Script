@@ -1,0 +1,18 @@
+//
+//  Resource+Color.swift
+//
+//
+//  Created by Resource Script
+//
+
+import UIKit
+
+public extension Resource {
+    enum color { }
+}
+
+public extension Resource.color {
+    <%- resources.each do |resource| -%>
+    static var <%= resource.key %>: Resource.ColorResource { Resource.ColorResource(named: "<%= resource.value %>", in: .module) }
+    <%- end -%>
+}

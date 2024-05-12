@@ -1,18 +1,19 @@
 //
 //  Resource+Icon.swift
-//  
+//
 //
 //  Created by Resource Script
 //
 
 import UIKit
+import SwiftUI
 
 public extension Resource {
-    enum Icon { }
+    enum icon { }
 }
 
-public extension Resource.Icon {
+public extension Resource.icon {
     <%- resources.each do |resource| -%>
-    static var <%= resource.key %>: UIImage { UIImage(named: "<%= resource.value %>", in: .module, compatibleWith: nil)!.glyph }
+    static var <%= resource.key %>: Resource.ImageResource { Resource.ImageResource(named: "<%= resource.value %>", in: .module).glyph() }
     <%- end -%>
 }

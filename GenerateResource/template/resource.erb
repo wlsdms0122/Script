@@ -5,8 +5,90 @@
 //  Created by Resource Script
 //
 
-import Foundation
+import UIKit
+import SwiftUI
 
 public typealias R = Resource
 
 public enum Resource { }
+
+// swiftlint:disable force_unwrapping
+public extension Resource {
+    struct ColorResource {
+        // MARK: - Property
+        public let uiColor: UIColor
+        public var color: Color { Color(uiColor: uiColor) }
+
+        // MARK: - Initializer
+        public init(named name: String, in bundle: Bundle) {
+            self.uiColor = UIColor(named: name, in: bundle, compatibleWith: nil)!
+        }
+
+        public init(_ color: UIColor) {
+            self.uiColor = color
+        }
+
+        // MARK: - Public
+        public func callAsFunction() -> UIColor {
+            uiColor
+        }
+
+        public func callAsFunction() -> Color {
+            color
+        }
+
+        // MARK: - Private
+    }
+
+    struct ImageResource {
+        // MARK: - Property
+        public let uiImage: UIImage
+        public var image: Image { Image(uiImage: uiImage) }
+
+        // MARK: - Initializer
+        public init(named name: String, in bundle: Bundle) {
+            self.uiImage = UIImage(named: name, in: bundle, compatibleWith: nil)!
+        }
+
+        public init(_ image: UIImage) {
+            self.uiImage = image
+        }
+
+        // MARK: - Public
+        public func callAsFunction() -> UIImage {
+            uiImage
+        }
+
+        public func callAsFunction() -> Image {
+            image
+        }
+
+        public func glyph() -> ImageResource {
+            ImageResource(uiImage.withRenderingMode(.alwaysTemplate))
+        }
+
+        // MARK: - Private
+    }
+
+    struct StringResource {
+        // MARK: - Property
+        public let string: String
+
+        // MARK: - Initializer
+        public init(_ key: String, tableName: String? = nil, in bundle: Bundle, default value: String) {
+            self.string = NSLocalizedString(key, tableName: tableName, bundle: bundle, value: value, comment: "")
+        }
+
+        public init(_ string: String) {
+            self.string = string
+        }
+
+        // MARK: - Public
+        public func callAsFunction() -> String {
+            string
+        }
+
+        // MARK: - Private
+    }
+}
+// swiftlint:enable force_unwrapping
