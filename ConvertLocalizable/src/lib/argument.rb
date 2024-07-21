@@ -15,7 +15,7 @@ class Argument
         @command = parameters.fetch(:command)
         @aliases = parameters.fetch(:aliases, [])
         @minCount = parameters.fetch(:min, 1)
-        @maxCount = parameters.fetch(:max)
+        @maxCount = parameters.fetch(:max, 1)
     end
 
     # Public
@@ -38,12 +38,12 @@ class ArgumentParser
     # Property
 
     # Initializer
-    def initialize(arguments = [])
+    def initialize(arguments = [], min: nil, max: nil)
         @arguments = arguments.to_h { |argument| [argument.command, argument] }
 
         return unless @arguments[:argv].nil?
 
-        @arguments[:argv] = Argument.new(command: :argv, min: 0, max: -1)
+        @arguments[:argv] = Argument.new(command: :argv, min: min || 0, max: max || min || -1)
     end
 
     # Public
@@ -54,10 +54,10 @@ class ArgumentParser
         stack = []
 
         arguments.each { |argv|
-            if argv.start_with?("-")
+            if argv.start_with?("-") || argv.start_with?("--")
                 # Command
                 # Get command without '-' delimiter.
-                command = argv[1, argv.length - 1]
+                command = argv.sub(/^--?/, '')
 
                 if argument == @arguments[:argv] && !stack.empty?
                     # If option command('-x') apper before arguments.
