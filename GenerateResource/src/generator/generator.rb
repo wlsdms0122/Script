@@ -12,11 +12,13 @@ class Resource
     # Property
     attr_reader :key
     attr_reader :value
+    attr_reader :content
 
     # Initializer
-    def initialize(key, value)
+    def initialize(key, value, content = nil)
         @key = key
         @value = value
+        @content = content
     end
 
     # Public

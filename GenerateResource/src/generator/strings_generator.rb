@@ -19,10 +19,12 @@ class StringsGenerator < Generator
         File.readlines(@rootPath + path)
             .filter { |line| line =~ /".*" ?= ?".*";/ }
             .map { |line|
-                key = line.split(/ ?= ?/).first
-                    .gsub(/"/, "")
+                components = line.split(/ ?= ?/)
 
-                Resource.new(key.camelCase, key)
+                key = components[0].scan(/(?<=\").*(?=\")/).first
+                content = components[1].scan(/(?<=\").*(?=\")/).first
+
+                Resource.new(key.camelCase, key, content)
             }
     end
 
