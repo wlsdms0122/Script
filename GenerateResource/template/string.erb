@@ -13,6 +13,7 @@ public extension Resource {
 
 public extension Resource.string {
     <%- resources.each do |resource| -%>
+    /// "<%= resource.content %>"
     static var <%= resource.key %>: Resource.StringResource { Resource.StringResource("<%= resource.value %>", in: .module, default: "unknown") }
     <%- end -%>
 }
