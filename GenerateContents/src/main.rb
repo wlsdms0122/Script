@@ -1,9 +1,9 @@
-#
+#  
 #  main.rb
 #  
-#
+#  
 #  Created by JSilver on 2023/04/25.
-#
+#  
 
 require 'pathname'
 require 'yaml'
@@ -12,8 +12,6 @@ require_relative 'lib/argument'
 require_relative 'lib/config'
 
 # Constants
-CONFIG_PATH = "gcconfig.yml"
-
 WORKSPACE_DATA_TEMPLATE = File.expand_path("../template/contents.xcworkspacedata.erb", __dir__)
 FILE_TEMPLATE = File.expand_path("../template/file.erb", __dir__)
 GROUP_TEMPLATE = File.expand_path("../template/group.erb", __dir__)
@@ -23,16 +21,16 @@ OUTPUT_FILE = "contents.xcworkspacedata"
 INDENT_SPACE = 3
 
 # Functions
-def generate(config)
-    workspacePath = Pathname.new(config[:xcworkspace])
-
+def generate(workspacePath)
+    workspacePath = Pathname.new(workspacePath)
+    
     # Generate content.xcworkspacedata file.
     workspace = ERB.new(File.read(WORKSPACE_DATA_TEMPLATE))
     content = generateContent(
         readComponents(workspacePath), 
         indent: INDENT_SPACE
     )
-
+    
     # Write content.xcworkspace data file.
     File.write(
         workspacePath / Pathname.new(OUTPUT_FILE), 
@@ -46,7 +44,7 @@ def readComponents(workspacePath)
         path = Pathname.new(xcodeproj)
         path.realpath.relative_path_from(workspacePath.parent.realpath).to_s
     end
-
+    
     packages = Dir["**/*/Package.swift"].map do |package|
         path = Pathname.new(package).parent
         path.realpath.relative_path_from(workspacePath.parent.realpath).to_s
@@ -56,7 +54,7 @@ def readComponents(workspacePath)
     components = (xcodeprojs + packages).sort do |lhs, rhs| 
         comparePath(lhs, rhs)
     end
-
+    
     # Convert components to tree structure.
     return toTree(components)
 end
@@ -69,43 +67,43 @@ def comparePath(lhs, rhs)
     
     (0...minLength).each do |i|
         next if lhsComponents[i] == rhsComponents[i]
-
+        
         if i < minLength - 1 || lhsComponents.length == rhsComponents.length
             return lhsComponents[i] <=> rhsComponents[i]
         else
             return rhsComponents.length <=> lhsComponents.length
         end
     end
-
+    
     lhs <=> rhs
 end
 
 def toTree(paths)
     tree = {}
-  
+    
     paths.each do |path|
         pathComponents = path.split('/')
-
+        
         node = tree
         pathComponents.each do |component|
             node[component] ||= {}
             node = node[component]
         end
     end
-  
+    
     return tree
 end
 
 def generateContent(components, path: "", indent:)
     content = ""
     indentString = " " * indent
-
+    
     components.each do | key, value |
         if value.empty?
             # File
             template = ERB.new(File.read(FILE_TEMPLATE))
             location = "#{path}/#{key}"
-
+            
             content += template.result(binding)
         else
             # Directory
@@ -119,24 +117,25 @@ def generateContent(components, path: "", indent:)
             
             content += template.result(binding)
         end
-
+        
         content += "\n"
     end
-
+    
     # Remove last '\n' character.
     return content.chomp
 end
   
 # Main
 def main(argv)
-    # Get arguments
-    parser = ArgumentParser.new()
-    arguments = parser.parse(argv)
-
-    config = Config.new(arguments[:argv]&.first || CONFIG_PATH, scheme: {
-        :xcworkspace => Dir["*.xcworkspace"].first
-    })
-
-    generate(config)
-    puts "✅ Workspace data generation complete."
+    # Get arguments.
+    arguments = ArgumentParser.new().parse(argv)
+    
+    # Check arguments.
+    workspacePath = arguments[:argv]&.first || Dir["*.xcworkspace"].first
+    if workspacePath.nil?
+        abort("workspace-gen: xcworkspace file not found.")
+    end
+    
+    generate(workspacePath)
+    puts "✅ Workspace content generation complete."
 end
