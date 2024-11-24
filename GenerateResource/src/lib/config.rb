@@ -1,9 +1,9 @@
-#
+#  
 #  config.rb
-#
-#
+#  
+#  
 #  Created by JSilver on 2023/06/01.
-#
+#  
 
 class Config
     # Constants
@@ -17,7 +17,7 @@ class Config
         yaml = File.exist?(path) ? YAML.load_file(path) : nil
         @config = _update(scheme, convert(yaml))
     end
-
+    
     # Public
     def [](key)
         @config[key]
