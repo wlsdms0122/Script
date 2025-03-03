@@ -43,16 +43,24 @@ end
   
 # Main
 def main(argv)
-    # Get arguments
-    configPath = ARGV[0]
-    version = ARGV[1]
-    build = ARGV[2]
+    begin
+        # Get arguments
+        configPath = ARGV[0]
+        version = ARGV[1]
+        build = ARGV[2]
+    
+        updateConfig(configPath, version, build)
+    rescue StandardError
+        abort(
+            <<~ERROR
+                Error: #{$!}
+                #{$@.join("\n    ")}
 
-    if version.nil? || build.nil?
-        abort("Usage: update_config <xcconfig path> <version> <build>")
+                usage: ruby run.rb [xcconfig path] [version] [build]
+            ERROR
+        )
     end
-
-    updateConfig(configPath, version, build)
 end
 
+# ruby run.rb [xcconfig path] [version] [build]
 main(ARGV)
