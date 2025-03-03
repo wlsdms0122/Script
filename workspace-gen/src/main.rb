@@ -127,15 +127,23 @@ end
   
 # Main
 def main(argv)
-    # Get arguments.
-    arguments = ArgumentParser.new().parse(argv)
-    
-    # Check arguments.
-    workspacePath = arguments[:argv]&.first || Dir["*.xcworkspace"].first
-    if workspacePath.nil?
-        abort("workspace-gen: xcworkspace file not found.")
+    begin
+        # Get arguments.
+        arguments = ArgumentParser.new().parse(argv)
+        
+        # Check arguments.
+        workspacePath = arguments[:argv]&.first || Dir["*.xcworkspace"].first
+        
+        generate(workspacePath)
+        puts "✅ Workspace content generation complete."
+    rescue StandardError
+        abort(
+            <<~ERROR
+                Error: #{$!}
+                #{$@.join("\n    ")}
+
+                usage: ruby run.rb [workspace path]
+            ERROR
+        )
     end
-    
-    generate(workspacePath)
-    puts "✅ Workspace content generation complete."
 end
