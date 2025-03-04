@@ -20,8 +20,6 @@ class ImageAssetGenerator < Generator
         Dir["#{assetPath}/**/*.imageset"]
             .map { |path| Pathname.new(path) }
             .map { |path|
-                puts path
-                puts path.basename
                 paths = namespaces(path, basePath: assetPath)
                     .append(path.basename.to_s.split(".").first)
 
