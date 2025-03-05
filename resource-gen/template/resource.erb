@@ -90,5 +90,27 @@ public extension Resource {
 
         // MARK: - Private
     }
+    
+    struct FontResource {
+        // MARK: - Property
+        public let uiFont: UIFont
+        public var font: Font { Font(uiFont) }
+
+        // MARK: - Initializer
+        public init(_ uiFont: UIFont) {
+            self.uiFont = uiFont
+        }
+
+        // MARK: - Public
+        public func callAsFunction() -> UIFont {
+            uiFont
+        }
+        
+        public func callAsFunction() -> Font {
+            font
+        }
+
+        // MARK: - Private
+    }
 }
 // swiftlint:enable force_unwrapping
