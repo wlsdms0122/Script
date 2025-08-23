@@ -1,18 +1,15 @@
 //
-//  Resource+Image.swift
+//  Resource+<%= name %>.swift
 //
 //
 //  Created by Resource Script
 //
 
-import UIKit
-import SwiftUI
-
 public extension Resource {
-    enum image { }
+    enum <%= name %> { }
 }
 
-public extension Resource.image {
+public extension Resource.<%= name %> {
     <%- resources.each do |resource| -%>
     static var <%= resource.key %>: Resource.ImageResource { Resource.ImageResource(named: "<%= resource.value %>", in: .module) }
     <%- end -%>

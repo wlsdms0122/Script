@@ -1,5 +1,5 @@
 #
-#  ImageAssetGenerator.rb
+#  color_catalog_generator.rb
 #
 #
 #  Created by JSilver on 2024/05/12.
@@ -7,20 +7,20 @@
 
 require_relative "generator"
 
-class ImageAssetGenerator < Generator
+# Class
+class ColorCatalogGenerator < Generator
     # Property
 
     # Initializer
 
     # Public
-    def parse(path)
-        return [] if path.nil?
+    def parse(sourcePath)
+        return [] if sourcePath.nil?
 
-        assetPath = @rootPath + path
-        Dir["#{assetPath}/**/*.imageset"]
+        Dir["#{sourcePath}/**/*.colorset"]
             .map { |path| Pathname.new(path) }
             .map { |path|
-                paths = namespaces(path, basePath: assetPath)
+                paths = namespaces(path, basePath: sourcePath)
                     .append(path.basename.to_s.split(".").first)
 
                 Resource.new(

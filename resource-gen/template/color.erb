@@ -1,17 +1,15 @@
 //
-//  Resource+Color.swift
+//  Resource+<%= name %>.swift
 //
 //
 //  Created by Resource Script
 //
 
-import UIKit
-
 public extension Resource {
-    enum color { }
+    enum <%= name %> { }
 }
 
-public extension Resource.color {
+public extension Resource.<%= name %> {
     <%- resources.each do |resource| -%>
     static var <%= resource.key %>: Resource.ColorResource { Resource.ColorResource(named: "<%= resource.value %>", in: .module) }
     <%- end -%>

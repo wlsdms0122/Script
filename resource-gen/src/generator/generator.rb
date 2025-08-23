@@ -1,65 +1,112 @@
 #
-#  Generator.rb
+#  generator.rb
 #
 #
 #  Created by JSilver on 2024/05/12.
 #
 
 # Class
-class Resource
-    include Comparable
-
-    # Property
-    attr_reader :key
-    attr_reader :value
-    attr_reader :content
-
-    # Initializer
-    def initialize(key, value, content = nil)
-        @key = key
-        @value = value
-        @content = content
-    end
-
-    # Public
-    def <=>(other)
-        @key <=> other.key
-    end
-
-    # Private
-end
-
 class Generator
     # Property
 
     # Initializer
     def initialize(
-        rootPath,
-        outputPath,
+        name,
         templatePath,
-        sourcePath
+        sourcePath,
+        outputPath
     )
-        @rootPath = rootPath
-        @outputPath = outputPath
+        @name = name
         @templatePath = templatePath
         @sourcePath = sourcePath
+        @outputPath = outputPath
     end
 
     # Public
+    def self.make(type, name, templatePath, sourcePath, outputPath)
+        fileName = name.nil? ? "Resource.swift" : "Resource+#{name}.swift"
+
+        case type.to_sym
+        when :none
+            require_relative "none_generator"
+
+            NoneGenerator.new(
+                name,
+                templatePath + "resource.erb",
+                sourcePath,
+                outputPath + fileName
+            )
+
+        when :strings
+            require_relative "strings_generator"
+
+            StringsGenerator.new(
+                name,
+                templatePath + "string.erb",
+                sourcePath,
+                outputPath + fileName
+            )
+
+        when :stringCatalog
+            require_relative "string_catalog_generator"
+
+            StringCatalogGenerator.new(
+                name,
+                templatePath + "string.erb",
+                sourcePath,
+                outputPath + fileName
+            )
+
+        when :imageCatalog
+            require_relative "image_catalog_generator"
+
+            ImageCatalogGenerator.new(
+                name,
+                templatePath + "image.erb",
+                sourcePath,
+                outputPath + fileName
+            )
+
+        when :glyphCatalog
+            require_relative "image_catalog_generator"
+
+            ImageCatalogGenerator.new(
+                name,
+                templatePath + "glyph.erb",
+                sourcePath,
+                outputPath + fileName
+            )
+
+        when :colorCatalog
+            require_relative "color_catalog_generator"
+
+            ColorCatalogGenerator.new(
+                name,
+                templatePath + "color.erb",
+                sourcePath,
+                outputPath + fileName
+            )
+        end
+    end
+
     def parse(_path)
         raise NotImplementedError
     end
 
     def generate
-        resources = parse(@sourcePath)
-            .sort
+        require_relative "resource"
 
+        # Define properties for binding.
+        name = @name
+        resources = parse(@sourcePath).sort
+
+        # Generate resources from ERB template.
         templateERB = ERB.new(
-            File.read(@rootPath + @templatePath),
+            File.read(@templatePath),
             trim_mode: "-"
         )
         File.write(
-            @rootPath + @outputPath,
+            @outputPath,
             templateERB.result(binding)
         )
     end

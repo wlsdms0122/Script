@@ -5,66 +5,129 @@
 //  Created by Resource Script
 //
 
+#if canImport(AppKit)
+import AppKit
+#endif
+#if canImport(UIKit)
 import UIKit
+#endif
+#if canImport(SwiftUI)
 import SwiftUI
+#endif
 
 public typealias R = Resource
 
 public enum Resource { }
 
-// swiftlint:disable force_unwrapping
 public extension Resource {
     struct ColorResource {
         // MARK: - Property
+        #if canImport(AppKit) && canImport(SwiftUI)
+        public let nsColor: NSColor
+        public var color: SwiftUI.Color { SwiftUI.Color(nsColor: nsColor) }
+        #elseif canImport(UIKit) && canImport(SwiftUI)
         public let uiColor: UIColor
-        public var color: Color { Color(uiColor: uiColor) }
-
+        public var color: SwiftUI.Color { SwiftUI.Color(uiColor: uiColor) }
+        #endif
+        
         // MARK: - Initializer
-        public init(named name: String, in bundle: Bundle) {
+        public init(named name: Swift.String, in bundle: Bundle) {
+            #if canImport(AppKit)
+            self.nsColor = NSColor(named: name, bundle: bundle)!
+            #elseif canImport(UIKit)
             self.uiColor = UIColor(named: name, in: bundle, compatibleWith: nil)!
+            #endif
         }
-
+        
+        #if canImport(AppKit)
+        public init(_ color: NSColor) {
+            self.nsColor = color
+        }        
+        #elseif canImport(UIKit)
         public init(_ color: UIColor) {
             self.uiColor = color
         }
-
+        #endif
+        
         // MARK: - Public
+        #if canImport(AppKit)
+        public func callAsFunction() -> NSColor {
+            nsColor
+        }        
+        #elseif canImport(UIKit)
         public func callAsFunction() -> UIColor {
             uiColor
-        }
-
-        public func callAsFunction() -> Color {
+        }        
+        #endif
+        
+        #if canImport(SwiftUI)
+        public func callAsFunction() -> SwiftUI.Color {
             color
         }
-
+        #endif
+        
         // MARK: - Private
     }
 
     struct ImageResource {
         // MARK: - Property
+        #if canImport(AppKit) && canImport(SwiftUI)
+        public let nsImage: NSImage
+        public var image: SwiftUI.Image { SwiftUI.Image(nsImage: nsImage) }
+        #elseif canImport(UIKit) && canImport(SwiftUI)
         public let uiImage: UIImage
-        public var image: Image { Image(uiImage: uiImage) }
+        public var image: SwiftUI.Image { SwiftUI.Image(uiImage: uiImage) }
+        #endif
 
         // MARK: - Initializer
-        public init(named name: String, in bundle: Bundle) {
+        public init(named name: Swift.String, in bundle: Bundle) {
+            #if canImport(AppKit)
+            self.nsImage = bundle.image(forResource: name)!
+            #elseif canImport(UIKit)
             self.uiImage = UIImage(named: name, in: bundle, compatibleWith: nil)!
+            #endif
         }
 
+        #if canImport(AppKit)
+        public init(_ image: NSImage) {
+            self.nsImage = image
+        }
+        #endif
+        
+        #if canImport(UIKit)
         public init(_ image: UIImage) {
             self.uiImage = image
         }
-
+        #endif
+        
         // MARK: - Public
+        #if canImport(AppKit)
+        public func callAsFunction() -> NSImage {
+            nsImage
+        }
+        #endif
+        
+        #if canImport(UIKit)
         public func callAsFunction() -> UIImage {
             uiImage
         }
+        #endif
 
-        public func callAsFunction() -> Image {
+        #if canImport(SwiftUI)
+        public func callAsFunction() -> SwiftUI.Image {
             image
         }
+        #endif
 
         public func glyph() -> ImageResource {
+            #if canImport(AppKit)
+            let copy = nsImage.copy() as! NSImage
+            copy.isTemplate = true
+            
+            return ImageResource(copy)
+            #elseif canImport(UIKit)
             ImageResource(uiImage.withRenderingMode(.alwaysTemplate))
+            #endif
         }
 
         // MARK: - Private
@@ -72,19 +135,19 @@ public extension Resource {
 
     struct StringResource {
         // MARK: - Property
-        public let string: String
+        public let string: Swift.String
 
         // MARK: - Initializer
-        public init(_ key: String, tableName: String? = nil, in bundle: Bundle, default value: String) {
+        public init(_ key: Swift.String, tableName: Swift.String? = nil, in bundle: Bundle, default value: Swift.String) {
             self.string = NSLocalizedString(key, tableName: tableName, bundle: bundle, value: value, comment: "")
         }
 
-        public init(_ string: String) {
+        public init(_ string: Swift.String) {
             self.string = string
         }
 
         // MARK: - Public
-        public func callAsFunction() -> String {
+        public func callAsFunction() -> Swift.String {
             string
         }
 
@@ -93,24 +156,49 @@ public extension Resource {
     
     struct FontResource {
         // MARK: - Property
+        #if canImport(AppKit) && canImport(SwiftUI)
+        public let nsFont: NSFont
+        public var font: SwiftUI.Font { SwiftUI.Font(nsFont) }
+        #endif
+        
+        #if canImport(UIKit) && canImport(SwiftUI)
         public let uiFont: UIFont
-        public var font: Font { Font(uiFont) }
+        public var font: SwiftUI.Font { SwiftUI.Font(uiFont) }
+        #endif
 
         // MARK: - Initializer
-        public init(_ uiFont: UIFont) {
-            self.uiFont = uiFont
+        
+        #if canImport(AppKit)
+        public init(_ font: NSFont) {
+            self.nsFont = font
         }
+        #endif
+        
+        #if canImport(UIKit)
+        public init(_ font: UIFont) {
+            self.uiFont = font
+        }
+        #endif
 
         // MARK: - Public
+        #if canImport(AppKit)
+        public func callAsFunction() -> NSFont {
+            nsFont
+        }
+        #endif
+        
+        #if canImport(UIKit)
         public func callAsFunction() -> UIFont {
             uiFont
         }
+        #endif
         
-        public func callAsFunction() -> Font {
+        #if canImport(SwiftUI)
+        public func callAsFunction() -> SwiftUI.Font {
             font
         }
+        #endif
 
         // MARK: - Private
     }
 }
-// swiftlint:enable force_unwrapping

@@ -43,6 +43,8 @@ Style/FrozenStringLiteralComment:
     EnforcedStyle: never
 Style/Documentation:
     Enabled: false
+Style/MultilineBlockChai:
+    Enabled: false
 
 Naming/MethodName:
     EnforcedStyle: camelCase

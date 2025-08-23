@@ -1,5 +1,5 @@
 #
-#  StringsGenerator.rb
+#  strings_generator.rb
 #
 #
 #  Created by JSilver on 2024/05/12.
@@ -7,6 +7,7 @@
 
 require_relative "generator"
 
+# Class
 class StringsGenerator < Generator
     # Property
 
@@ -16,13 +17,13 @@ class StringsGenerator < Generator
     def parse(path)
         return [] if path.nil?
 
-        File.readlines(@rootPath + path)
+        File.readlines(path)
             .filter { |line| line =~ /".*" ?= ?".*";/ }
             .map { |line|
                 components = line.split(/ ?= ?/)
 
-                key = components[0].scan(/(?<=\").*(?=\")/).first
-                content = components[1].scan(/(?<=\").*(?=\")/).first
+                key = components[0].scan(/(?<=").*(?=")/).first
+                content = components[1].scan(/(?<=").*(?=")/).first
 
                 Resource.new(key.camelCase, key, content)
             }
