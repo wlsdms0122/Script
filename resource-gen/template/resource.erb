@@ -7,12 +7,19 @@
 
 #if canImport(AppKit)
 import AppKit
-#endif
-#if canImport(UIKit)
+#elseif canImport(UIKit)
 import UIKit
 #endif
-#if canImport(SwiftUI)
 import SwiftUI
+
+#if canImport(AppKit)
+public typealias PlatformColor = NSColor
+public typealias PlatformImage = NSImage
+public typealias PlatformFont = NSFont
+#elseif canImport(UIKit)
+public typealias PlatformColor = UIColor
+public typealias PlatformImage = UIImage
+public typealias PlatformFont = UIFont
 #endif
 
 public typealias R = Resource
@@ -20,120 +27,94 @@ public typealias R = Resource
 public enum Resource { }
 
 public extension Resource {
-    struct ColorResource {
+    struct ColorResource: Sendable {
         // MARK: - Property
-        #if canImport(AppKit) && canImport(SwiftUI)
-        public let nsColor: NSColor
-        public var color: SwiftUI.Color { SwiftUI.Color(nsColor: nsColor) }
-        #elseif canImport(UIKit) && canImport(SwiftUI)
-        public let uiColor: UIColor
-        public var color: SwiftUI.Color { SwiftUI.Color(uiColor: uiColor) }
-        #endif
+        public let platformColor: PlatformColor
+        public var color: SwiftUI.Color {
+            #if canImport(AppKit)
+            SwiftUI.Color(nsColor: platformColor)
+            #elseif canImport(UIKit)
+            SwiftUI.Color(uiColor: platformColor)
+            #endif
+        }
         
         // MARK: - Initializer
         public init(named name: Swift.String, in bundle: Bundle) {
             #if canImport(AppKit)
-            self.nsColor = NSColor(named: name, bundle: bundle)!
+            self.platformColor = PlatformColor(named: name, bundle: bundle)!
             #elseif canImport(UIKit)
-            self.uiColor = UIColor(named: name, in: bundle, compatibleWith: nil)!
+            self.platformColor = PlatformColor(named: name, in: bundle, compatibleWith: nil)!
             #endif
         }
         
-        #if canImport(AppKit)
-        public init(_ color: NSColor) {
-            self.nsColor = color
-        }        
-        #elseif canImport(UIKit)
-        public init(_ color: UIColor) {
-            self.uiColor = color
+        public init(_ color: PlatformColor) {
+            self.platformColor = color
         }
-        #endif
         
         // MARK: - Public
-        #if canImport(AppKit)
-        public func callAsFunction() -> NSColor {
-            nsColor
-        }        
-        #elseif canImport(UIKit)
-        public func callAsFunction() -> UIColor {
-            uiColor
-        }        
-        #endif
+        public func callAsFunction() -> PlatformColor {
+            platformColor
+        }
         
-        #if canImport(SwiftUI)
         public func callAsFunction() -> SwiftUI.Color {
             color
         }
-        #endif
+        
+        public func alpha(_ alpha: CGFloat) -> ColorResource {
+            ColorResource(platformColor.withAlphaComponent(alpha))
+        }
         
         // MARK: - Private
     }
 
-    struct ImageResource {
+    struct ImageResource: Sendable {
         // MARK: - Property
-        #if canImport(AppKit) && canImport(SwiftUI)
-        public let nsImage: NSImage
-        public var image: SwiftUI.Image { SwiftUI.Image(nsImage: nsImage) }
-        #elseif canImport(UIKit) && canImport(SwiftUI)
-        public let uiImage: UIImage
-        public var image: SwiftUI.Image { SwiftUI.Image(uiImage: uiImage) }
-        #endif
-
+        public let platformImage: PlatformImage
+        public var image: SwiftUI.Image {
+            #if canImport(AppKit)
+            SwiftUI.Image(nsImage: platformImage)
+            #elseif canImport(UIKit)
+            SwiftUI.Image(uiImage: platformImage)
+            #endif
+        }
+        
         // MARK: - Initializer
         public init(named name: Swift.String, in bundle: Bundle) {
             #if canImport(AppKit)
-            self.nsImage = bundle.image(forResource: name)!
+            self.platformImage = bundle.image(forResource: name)!
             #elseif canImport(UIKit)
-            self.uiImage = UIImage(named: name, in: bundle, compatibleWith: nil)!
+            self.platformImage = PlatformImage(named: name, in: bundle, compatibleWith: nil)!
             #endif
         }
-
-        #if canImport(AppKit)
-        public init(_ image: NSImage) {
-            self.nsImage = image
-        }
-        #endif
         
-        #if canImport(UIKit)
-        public init(_ image: UIImage) {
-            self.uiImage = image
+        public init(_ image: PlatformImage) {
+            self.platformImage = image
         }
-        #endif
         
         // MARK: - Public
-        #if canImport(AppKit)
-        public func callAsFunction() -> NSImage {
-            nsImage
+        public func callAsFunction() -> PlatformImage {
+            platformImage
         }
-        #endif
         
-        #if canImport(UIKit)
-        public func callAsFunction() -> UIImage {
-            uiImage
-        }
-        #endif
-
-        #if canImport(SwiftUI)
         public func callAsFunction() -> SwiftUI.Image {
             image
         }
-        #endif
-
+        
         public func glyph() -> ImageResource {
             #if canImport(AppKit)
-            let copy = nsImage.copy() as! NSImage
+            let copy = platformImage.copy() as! PlatformImage
             copy.isTemplate = true
             
             return ImageResource(copy)
             #elseif canImport(UIKit)
-            ImageResource(uiImage.withRenderingMode(.alwaysTemplate))
+            ImageResource(platformImage.withRenderingMode(.alwaysTemplate))
             #endif
         }
 
         // MARK: - Private
     }
 
-    struct StringResource {
+    struct StringResource: Sendable {
         // MARK: - Property
         public let string: Swift.String
 
@@ -154,51 +135,31 @@ public extension Resource {
         // MARK: - Private
     }
     
-    struct FontResource {
+    struct FontResource: @unchecked Sendable {
         // MARK: - Property
-        #if canImport(AppKit) && canImport(SwiftUI)
-        public let nsFont: NSFont
-        public var font: SwiftUI.Font { SwiftUI.Font(nsFont) }
-        #endif
+        public let platformFont: PlatformFont
+        public var font: SwiftUI.Font {
+            #if canImport(AppKit)
+            SwiftUI.Font(platformFont)
+            #elseif canImport(UIKit)
+            SwiftUI.Font(platformFont)
+            #endif
+        }
         
-        #if canImport(UIKit) && canImport(SwiftUI)
-        public let uiFont: UIFont
-        public var font: SwiftUI.Font { SwiftUI.Font(uiFont) }
-        #endif
-
         // MARK: - Initializer
-        
-        #if canImport(AppKit)
-        public init(_ font: NSFont) {
-            self.nsFont = font
+        public init(_ font: PlatformFont) {
+            self.platformFont = font
         }
-        #endif
-        
-        #if canImport(UIKit)
-        public init(_ font: UIFont) {
-            self.uiFont = font
-        }
-        #endif
 
         // MARK: - Public
-        #if canImport(AppKit)
-        public func callAsFunction() -> NSFont {
-            nsFont
+        public func callAsFunction() -> PlatformFont {
+            platformFont
         }
-        #endif
         
-        #if canImport(UIKit)
-        public func callAsFunction() -> UIFont {
-            uiFont
-        }
-        #endif
-        
-        #if canImport(SwiftUI)
         public func callAsFunction() -> SwiftUI.Font {
             font
         }
-        #endif
-
+        
         // MARK: - Private
     }
 }
