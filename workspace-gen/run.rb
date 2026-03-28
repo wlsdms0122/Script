@@ -7,5 +7,5 @@
 
 require_relative 'src/main'
 
-# ruby run.rb [workspace path]
+# ruby run.rb [--config <config_path>]
 main(ARGV)

@@ -18,43 +18,49 @@ GROUP_TEMPLATE = File.expand_path("../template/group.erb", __dir__)
 
 OUTPUT_FILE = "contents.xcworkspacedata"
 
+CONFIG_FILE = ".workspace-gen.yaml"
+CONFIG_SEARCH_PATHS = [
+    File.expand_path(CONFIG_FILE),
+    File.expand_path("../#{CONFIG_FILE}", __dir__)
+]
+
 INDENT_SPACE = 3
 
 # Functions
-def generate(workspacePath)
+def generate(workspacePath, folders: [])
     workspacePath = Pathname.new(workspacePath)
-    
+
     # Generate content.xcworkspacedata file.
     workspace = ERB.new(File.read(WORKSPACE_DATA_TEMPLATE))
     content = generateContent(
-        readComponents(workspacePath), 
+        readComponents(workspacePath, folders: folders),
         indent: INDENT_SPACE
     )
-    
+
     # Write content.xcworkspace data file.
     File.write(
-        workspacePath / Pathname.new(OUTPUT_FILE), 
+        workspacePath / Pathname.new(OUTPUT_FILE),
         workspace.result(binding)
     )
 end
 
-def readComponents(workspacePath)
+def readComponents(workspacePath, folders: [])
     # Read package & projects.
     xcodeprojs =  Dir["**/*.xcodeproj"].map do |xcodeproj|
         path = Pathname.new(xcodeproj)
         path.realpath.relative_path_from(workspacePath.parent.realpath).to_s
     end
-    
+
     packages = Dir["**/*/Package.swift"].map do |package|
         path = Pathname.new(package).parent
         path.realpath.relative_path_from(workspacePath.parent.realpath).to_s
     end
-    
+
     # Sort by prioirty.
-    components = (xcodeprojs + packages).sort do |lhs, rhs| 
+    components = (xcodeprojs + packages + folders).sort do |lhs, rhs|
         comparePath(lhs, rhs)
     end
-    
+
     # Convert components to tree structure.
     return toTree(components)
 end
@@ -102,7 +108,7 @@ def generateContent(components, path: "", indent:)
         if value.empty?
             # File
             template = ERB.new(File.read(FILE_TEMPLATE))
-            location = "#{path}/#{key}"
+            location = path.empty? ? key : "#{path}/#{key}"
             
             content += template.result(binding)
         else
@@ -127,23 +133,44 @@ end
   
 # Main
 def main(argv)
-    begin
-        # Get arguments.
-        arguments = ArgumentParser.new().parse(argv)
-        
-        # Check arguments.
-        workspacePath = arguments[:argv]&.first || Dir["*.xcworkspace"].first
-        
-        generate(workspacePath)
-        puts "✅ Workspace content generation complete."
-    rescue StandardError
-        abort(
-            <<~ERROR
-                Error: #{$!}
-                #{$@.join("\n    ")}
+    # Parse arguments.
+    arguments = ArgumentParser.new([
+        Argument.new(command: "config", aliases: ["c"], min: 0, max: 1)
+    ]).parse(argv)
 
-                usage: ruby run.rb [workspace path]
-            ERROR
-        )
+    # Resolve config path.
+    configPath = if arguments["config"]&.first
+        File.expand_path(arguments["config"].first)
+    else
+        CONFIG_SEARCH_PATHS.find { |path| File.exist?(path) }
     end
+
+    # Load config.
+    config = Config.new(configPath, scheme: {
+        workspace: nil,
+        folders: []
+    })
+
+    # Check arguments.
+    workspacePath = config[:workspace] || Dir["*.xcworkspace"].first
+    folders = config[:folders]
+
+    generate(workspacePath, folders: folders)
+    puts "✅ Workspace content generation complete."
+rescue StandardError => e
+    abort(
+        <<~ERROR
+            Error: #{e.message}
+            #{e.backtrace.join("\n    ")}
+
+            usage: ruby run.rb [--config <config_path>]
+
+            Options:
+              --config, -c    Path to config file (optional)
+                              Search priority:
+                                1. CLI --config path
+                                2. .workspace-gen.yaml in current directory
+                                3. Default config in script module
+        ERROR
+    )
 end
